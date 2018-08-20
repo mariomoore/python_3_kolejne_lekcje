@@ -78,3 +78,38 @@ def merge(left, right):
 
     result.next.prev = result
     return result
+
+
+def quicksort_sort(numbers):
+    quicksort(numbers, 0, count(numbers.begin)-1)
+
+
+def quicksort(numbers, lo, hi):
+    if lo < hi:
+        p = partition(numbers, lo, hi)
+        quicksort(numbers, lo, p-1)
+        quicksort(numbers, p+1, hi)
+
+
+def partition(numbers, lo, hi):
+    pivot = get_node_by_index(numbers, hi)
+    i = lo
+    for j in range(lo, hi):
+        node_j = get_node_by_index(numbers, j)
+        if node_j.value < pivot.value:
+            node_i = get_node_by_index(numbers, i)
+            node_i.value, node_j.value = node_j.value, node_i.value
+            i += 1
+    node_i = get_node_by_index(numbers, i)
+    node_hi = get_node_by_index(numbers, hi)
+    node_i.value, node_hi.value = node_hi.value, node_i.value
+    return i
+
+
+def get_node_by_index(numbers, i):
+    node = numbers.begin
+    counter = 0
+    while node and counter < i:
+        node = node.next
+        counter += 1
+    return node
