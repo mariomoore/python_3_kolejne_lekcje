@@ -1,3 +1,6 @@
+import production
+
+
 class Parser(object):
 
     def __init__(self, scanner):
@@ -28,30 +31,6 @@ class Parser(object):
         while tokens:
             results.append(self.root())
         return results
-
-
-# class Fun_Def_Exp(object):
-#
-#     def __init__(self, type, name, params):
-#         self.type = type
-#         self.name = name
-#         self.params = params
-
-
-# class Fun_Cal_Exp(object):
-#
-#     def __init__(self, type, name, params):
-#         self.type = type
-#         self.name = name
-#         self.params = params
-
-
-# class Plu_Exp(object):
-#
-#     def __init__(self, type, left, right):
-#         self.type = type
-#         self.left = left
-#         self.right = right
 
 
 class PunyPyParser(Parser):
@@ -86,10 +65,16 @@ class PunyPyParser(Parser):
         name = self.match('NAME')
         self.skip('LPAREN')
         params = self.parameters()
-        self.skip('RPAREN')
-        self.skip('COLON')
-        return {'type': 'FUNCDEF', 'name': name, 'params': params}
-        # return Fun_Def_Exp('FUNCDEF', name, params)
+        self.skip('RPAREN', 'COLON')
+        body = self.function_body()
+        # return {'type': 'FUNCDEF', 'name': name, 'params': params}
+        return production.FuncDef(name, params, body)
+
+    def function_body(self):
+        body = []
+        while self.skip("INDENT"):
+            body.append(self.expression())
+        return body
 
     def parameters(self):
         """params = expression *(COMMA expression)"""
@@ -100,15 +85,16 @@ class PunyPyParser(Parser):
             start = self.peek()
             if start != 'RPAREN':
                 assert self.match('COMMA')
-        return params
+        # return params
+        return production.Parameters(params)
 
     def function_call(self, name):
         """funccall = name LPAREN params RPAREN"""
         self.match('LPAREN')
         params = self.parameters()
         self.match('RPAREN')
-        return {'type': 'FUNCCALL', 'name': name, 'params': params}
-        # return Fun_Cal_Exp('FUNCCALL', name, params)
+        # return {'type': 'FUNCCALL', 'name': name, 'params': params}
+        return production.FuncCall(name, params)
 
     def expression(self):
         """expression = name / plus / integer"""
@@ -125,7 +111,8 @@ class PunyPyParser(Parser):
             if self.peek() == 'PLUS':
                 return self.plus(name)
             else:
-                return name
+                # return name
+                return production.NameExpr(name)
         elif start == 'INTEGER':
             number = self.match('INTEGER')
             if self.peek()[0] == 'INDENT':
@@ -133,7 +120,8 @@ class PunyPyParser(Parser):
             if self.peek()[0] == 'PLUS':
                 return self.plus(number)
             else:
-                return number
+                # return number
+                return production.IntExpr(number)
         else:
             assert False, "Błąd składniowy %r" % start
 
@@ -141,5 +129,12 @@ class PunyPyParser(Parser):
         """plus = expression PLUS expression"""
         self.match('PLUS')
         right = self.expression()
-        return {'type': 'PLUS', 'left': left, 'right': right}
-        # return Plu_Exp('PLUS', left, right)
+        # return {'type': 'PLUS', 'left': left, 'right': right}
+        return production.AddExpr(left, right)
+
+
+class PunyPyWorld(object):
+
+    def __init__(self, variables):
+        self.variables = variables
+        self.functions = {}
